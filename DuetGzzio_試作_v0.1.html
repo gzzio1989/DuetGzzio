@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#14121a">
+<title>DuetGzzio — ふたりで、歌おう。</title>
+<style>
+:root{
+  --bg:#14121a; --bg2:#1b1824; --card:rgba(255,255,255,.065);
+  --card2:rgba(255,255,255,.10); --line:rgba(255,255,255,.13);
+  --tx:#f4f1fa; --sub:#a79fbb; --dim:#7d7594;
+  --pink:#ff8fb1; --mint:#7fe3c4; --lav:#b3a4ff; --gold:#ffd48a;
+  --r:20px; --pad:16px;
+  --safeT:env(safe-area-inset-top,0px); --safeB:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;overflow:hidden}
+body{
+  background:radial-gradient(120% 80% at 50% -10%,#241f33 0%,var(--bg) 55%,#100e15 100%);
+  color:var(--tx);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  font-size:17px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  user-select:none;-webkit-user-select:none;
+}
+#app{display:flex;flex-direction:column;height:100%;padding-top:var(--safeT)}
+
+/* ── ヘッダ ── */
+header{flex:0 0 auto;padding:10px var(--pad) 6px;display:flex;align-items:center;gap:10px}
+.logo{font-size:19px;font-weight:800;letter-spacing:.2px}
+.logo .g{background:linear-gradient(90deg,var(--pink),var(--lav));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.tag{font-size:12px;color:var(--dim);margin-left:auto}
+.dots{flex:0 0 auto;display:flex;gap:6px;padding:2px var(--pad) 10px}
+.dot{height:4px;flex:1;border-radius:3px;background:rgba(255,255,255,.12);transition:background .25s}
+.dot.on{background:linear-gradient(90deg,var(--pink),var(--lav))}
+.dot.done{background:rgba(179,164,255,.45)}
+
+/* ── 本体 ── */
+main{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 var(--pad) 8px}
+.screen{display:none;animation:fade .28s ease}
+.screen.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h2{font-size:24px;font-weight:800;margin:6px 0 4px;letter-spacing:-.01em}
+.lead{color:var(--sub);font-size:14px;margin:0 0 16px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.card h3{margin:0 0 6px;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card p{margin:0;color:var(--sub);font-size:13.5px;line-height:1.6}
+.card .chip{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:rgba(255,143,177,.16);color:var(--pink)}
+.card.pick{cursor:pointer;transition:transform .12s,background .2s;min-height:76px;display:flex;flex-direction:column;justify-content:center}
+.card.pick:active{transform:scale(.98);background:var(--card2)}
+.card.sel{border-color:var(--lav);background:rgba(179,164,255,.12);box-shadow:0 0 0 1px var(--lav) inset}
+
+/* ── ボタン ── */
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;min-height:56px;border-radius:16px;border:0;
+  font-family:inherit;font-size:17px;font-weight:800;color:#1a1424;
+  background:linear-gradient(135deg,var(--pink),var(--lav));
+  transition:transform .12s,opacity .2s;cursor:pointer;
+}
+.btn:active{transform:scale(.975)}
+.btn[disabled]{opacity:.38;pointer-events:none}
+.btn.ghost{background:transparent;color:var(--tx);border:1.5px solid var(--line);font-weight:700}
+.btn.mint{background:linear-gradient(135deg,var(--mint),#9fe8ff)}
+.btn.sm{min-height:44px;font-size:15px}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+
+/* ── 注意ばこ ── */
+.note{border-radius:16px;padding:13px 14px;font-size:13px;line-height:1.65;margin-bottom:12px;border:1px solid}
+.note.warn{background:rgba(255,212,138,.10);border-color:rgba(255,212,138,.32);color:#ffe6bd}
+.note.info{background:rgba(127,227,196,.09);border-color:rgba(127,227,196,.28);color:#c9f6e8}
+.note b{color:#fff}
+
+/* ── レベルメーター ── */
+.meter{height:14px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;position:relative}
+.meter i{display:block;height:100%;width:0%;border-radius:99px;
+  background:linear-gradient(90deg,var(--mint) 0%,var(--mint) 62%,var(--gold) 82%,var(--pink) 100%);
+  transition:width .05s linear}
+.meter.big{height:22px}
+.mlabel{display:flex;justify-content:space-between;font-size:11.5px;color:var(--dim);margin-top:6px}
+
+/* ── 録音ボタン ── */
+.recwrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:6px 0 2px}
+.rec{width:104px;height:104px;border-radius:50%;border:3px solid rgba(255,143,177,.5);
+  background:radial-gradient(circle at 50% 38%,#ff9bbb,#e4557f);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  font-size:14px;font-weight:800;color:#2a1020;transition:transform .12s;
+  box-shadow:0 8px 30px rgba(228,85,127,.34)}
+.rec:active{transform:scale(.94)}
+.rec.on{background:radial-gradient(circle at 50% 38%,#fff,#ffd0de);animation:pulse 1.1s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,143,177,.55)}50%{box-shadow:0 0 0 18px rgba(255,143,177,0)}}
+.timer{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:1px}
+
+/* ── つまみ ── */
+.knob{margin-bottom:15px}
+.knob .kh{display:flex;align-items:baseline;gap:8px;margin-bottom:7px}
+.knob .kn{font-size:15px;font-weight:700}
+.knob .kv{margin-left:auto;font-size:14px;font-weight:800;color:var(--mint);font-variant-numeric:tabular-nums}
+.knob .kd{font-size:11.5px;color:var(--dim)}
+input[type=range]{-webkit-appearance:none;width:100%;height:44px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:rgba(255,255,255,.13)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;
+  background:#fff;border:3px solid var(--lav);margin-top:-11px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+input[type=range]::-moz-range-track{height:8px;border-radius:99px;background:rgba(255,255,255,.13)}
+input[type=range]::-moz-range-thumb{width:30px;height:30px;border-radius:50%;background:#fff;border:3px solid var(--lav)}
+
+/* ── トグル ── */
+.tg{display:flex;align-items:center;gap:12px;min-height:48px}
+.tg .tn{font-size:15px;font-weight:700}
+.tg .td{font-size:11.5px;color:var(--dim)}
+/* ★ 見た目は 32pt でも、指で押せる所は 44pt 確保する（iOS の目安） */
+.sw{margin-left:auto;flex:0 0 auto;width:56px;height:44px;position:relative;cursor:pointer}
+.sw::before{content:"";position:absolute;left:0;top:6px;width:56px;height:32px;border-radius:99px;
+  background:rgba(255,255,255,.14);transition:background .2s}
+.sw::after{content:"";position:absolute;top:9px;left:3px;width:26px;height:26px;border-radius:50%;
+  background:#fff;transition:transform .2s;z-index:1}
+.sw.on::before{background:linear-gradient(90deg,var(--pink),var(--lav))}
+.sw.on::after{transform:translateX(24px)}
+
+/* ── トラック行 ── */
+.trk{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+.trk:last-child{border-bottom:0}
+.trk .ic{flex:0 0 auto;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.trk .tt{flex:1 1 auto;min-width:0}
+.trk .tt b{display:block;font-size:14.5px;font-weight:700}
+.trk .tt span{font-size:11.5px;color:var(--dim)}
+.trk .st{flex:0 0 auto;font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:99px}
+.st.ok{background:rgba(127,227,196,.17);color:var(--mint)}
+.st.no{background:rgba(255,255,255,.09);color:var(--dim)}
+.st.ng{background:rgba(255,143,177,.16);color:var(--pink)}
+
+/* ── YouTube枠 ── */
+#ytbox{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;
+  background:#000;border:1px solid var(--line);margin-bottom:12px}
+#ytbox iframe,#ytbox #ytph{position:absolute;inset:0;width:100%;height:100%;border:0}
+#ytph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  background:linear-gradient(135deg,#241d2e,#171320);color:var(--dim);font-size:13px}
+#ytph .yicon{width:52px;height:36px;border-radius:9px;background:#ff3d3d;display:flex;align-items:center;justify-content:center}
+#ytph .yicon::after{content:"";border-left:13px solid #fff;border-top:8px solid transparent;border-bottom:8px solid transparent;margin-left:3px}
+
+/* ── 下バー ── */
+footer{flex:0 0 auto;padding:8px var(--pad) calc(10px + var(--safeB));
+  background:linear-gradient(180deg,rgba(20,18,26,0),rgba(16,14,21,.94) 34%);
+  border-top:1px solid rgba(255,255,255,.06)}
+.hint{text-align:center;font-size:11.5px;color:var(--dim);margin:7px 0 0;min-height:16px}
+
+.small{font-size:11.5px;color:var(--dim);line-height:1.6}
+.kbd{font-size:11px;background:rgba(255,255,255,.09);padding:2px 6px;border-radius:6px;color:var(--sub)}
+.hr{height:1px;background:var(--line);margin:14px 0}
+.center{text-align:center}
+.big-emoji{font-size:44px;line-height:1;margin-bottom:6px}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div class="logo">Duet<span class="g">Gzzio</span></div>
+  <div class="tag">ふたりで、歌おう。</div>
+</header>
+<div class="dots">
+  <div class="dot on" data-d="0"></div><div class="dot" data-d="1"></div>
+  <div class="dot" data-d="2"></div><div class="dot" data-d="3"></div><div class="dot" data-d="4"></div>
+</div>
+
+<main>
+
+<!-- ============ 0. したく ============ -->
+<section class="screen on" id="sc0">
+  <h2>まず、耳のしたく</h2>
+  <p class="lead">スピーカーで鳴らすと、オケが自分のマイクに入ってしまいます。かならずイヤホンで。</p>
+
+  <div class="note warn">
+    <b>イヤホンは有線か、USB-C ／ Lightning のものを。</b><br>
+    Bluetooth（AirPods など）は音が耳に届くまで <b>約 150〜200 ミリ秒</b> 遅れます。歌がズレて、あとから直すのがとても大変になります。
+  </div>
+
+  <div class="card">
+    <h3>① 声を出してみる <span class="chip">かならず</span></h3>
+    <p>「あー」と、いつも歌うくらいの大きさで。<b>みどりの真ん中</b>で止まるのがちょうどいい大きさです。</p>
+    <div style="height:12px"></div>
+    <div class="meter big"><i id="m0"></i></div>
+    <div class="mlabel"><span>小さい</span><span id="m0t">まだ聞いていません</span><span>大きすぎ</span></div>
+    <div style="height:12px"></div>
+    <button class="btn ghost sm" id="btnMic">マイクを ためす</button>
+  </div>
+
+  <div class="card">
+    <div class="tg">
+      <div><div class="tn">イヤホンをつけた</div><div class="td">つけていないと、次に進めません</div></div>
+      <div class="sw" id="swHp"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1. オケをえらぶ ============ -->
+<section class="screen" id="sc1">
+  <h2>オケをえらぶ</h2>
+  <p class="lead">なにに合わせて歌いますか。</p>
+
+  <div class="card pick" id="pkYt">
+    <h3>▶ YouTube のカラオケ <span class="chip">同期再生</span></h3>
+    <p>公式プレイヤーで再生して、<b>あなたの声だけ</b>を録ります。合わせて歌う練習にどうぞ。</p>
+  </div>
+
+  <div class="card pick" id="pkFile">
+    <h3>♪ 自分が持っているオケ <span class="chip">書き出せる</span></h3>
+    <p>手持ちの音源ファイルを読みこみます。<b>オケごと1本にまとめて書き出せる</b>のはこちらです。</p>
+  </div>
+
+  <div class="card pick" id="pkNone">
+    <h3>♬ オケなし（アカペラ）</h3>
+    <p>声だけ録ります。あとから合わせることもできます。</p>
+  </div>
+
+  <div class="note info" id="ytWhy" style="display:none">
+    <b>YouTube の音は、書き出しには混ぜられません。</b><br>
+    YouTube の利用規約は、音だけを取り出すこと（III.I.7）と、録音・保存すること（III.E.1.a）を禁止しています。iPhone のしくみとしても、ほかのアプリが鳴らしている音はこのアプリからは取れません。<br>
+    なので YouTube は <b>「合わせて歌う練習」</b>専用、書き出しは <b>あなたの声だけ</b> になります。オケごと1本にしたいときは、上の「自分が持っているオケ」を選んでください。
+  </div>
+
+  <div id="ytIn" style="display:none">
+    <div class="card">
+      <h3>YouTube のリンク</h3>
+      <p style="margin-bottom:10px">アプリの「共有」からコピーしたリンクを貼ってください。</p>
+      <input id="ytUrl" type="url" inputmode="url" placeholder="https://youtu.be/..."
+        style="width:100%;min-height:50px;border-radius:14px;border:1px solid var(--line);
+        background:rgba(0,0,0,.28);color:var(--tx);padding:0 14px;font-size:16px;font-family:inherit">
+      <div style="height:10px"></div>
+      <button class="btn ghost sm" id="btnYtLoad">よみこむ</button>
+    </div>
+  </div>
+
+  <div id="fileIn" style="display:none">
+    <div class="card">
+      <h3>オケのファイル</h3>
+      <p style="margin-bottom:10px">m4a / mp3 / wav が使えます。</p>
+      <input id="bgFile" type="file" accept="audio/*" style="width:100%;font-size:14px;color:var(--sub)">
+      <div id="bgInfo" class="small" style="margin-top:10px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. 歌う ============ -->
+<section class="screen" id="sc2">
+  <h2>歌う</h2>
+  <p class="lead" id="singLead">録りたいパートをえらんで、まるいボタンを押してください。</p>
+
+  <div id="ytbox" style="display:none">
+    <div id="ytph"><div class="yicon"></div><div>YouTube プレイヤー</div></div>
+  </div>
+
+  <div class="card" style="padding:12px 16px">
+    <div class="trk" id="trkA">
+      <div class="ic" style="background:rgba(255,143,177,.18);color:var(--pink)">🎤</div>
+      <div class="tt"><b>パート１（じぶん）</b><span id="lenA">まだ録っていません</span></div>
+      <div class="st no" id="stA">まだ</div>
+    </div>
+    <div class="trk" id="trkB">
+      <div class="ic" style="background:rgba(179,164,255,.18);color:var(--lav)">🎤</div>
+      <div class="tt"><b>パート２（ハモリ・相手）</b><span id="lenB">まだ録っていません</span></div>
+      <div class="st no" id="stB">まだ</div>
+    </div>
+  </div>
+
+  <div class="recwrap">
+    <div class="timer" id="tmr">0:00</div>
+    <div class="rec" id="btnRec">ろくおん</div>
+    <div style="width:100%">
+      <div class="meter"><i id="m1"></i></div>
+      <div class="mlabel"><span id="recHint">まるを押すと、3つ数えてから始まります</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. 仕上げる ============ -->
+<section class="screen" id="sc3">
+  <h2>仕上げる</h2>
+  <p class="lead">まず「ズレ直し」。それから声を作ります。</p>
+
+  <div class="card">
+    <h3>ズレ直し <span class="chip">いちばん大事</span></h3>
+    <p>iPhone はマイクの音がほんの少し遅れて届きます。歌が早い／遅いと感じたら、ここでずらしてください。</p>
+    <div style="height:14px"></div>
+    <div class="knob">
+      <div class="kh"><span class="kn">ずらす</span><span class="kv" id="vOff">0 ms</span></div>
+      <input type="range" id="kOff" min="-300" max="300" step="5" value="0">
+      <div class="kd">← 歌を早める　　　　　　　　　　歌を遅らせる →</div>
+    </div>
+    <button class="btn ghost sm" id="btnAuto">じどうで合わせる</button>
+    <div class="small" style="margin-top:8px" id="autoMsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>声を作る <span class="chip">VocalGzzio</span></h3>
+    <div style="height:6px"></div>
+    <div class="knob"><div class="kh"><span class="kn">ノイズ除去</span><span class="kv" id="vNs">40</span></div>
+      <input type="range" id="kNs" min="0" max="100" value="40"><div class="kd">エアコンや、部屋のサーッという音を減らします</div></div>
+    <div class="knob"><div class="kh"><span class="kn">近さ</span><span class="kv" id="vPx">35</span></div>
+      <input type="range" id="kPx" min="0" max="100" value="35"><div class="kd">マイクに近づいたような、太い声にします</div></div>
+    <div class="knob"><div class="kh"><span class="kn">のび</span><span class="kv" id="vCp">50</span></div>
+      <input type="range" id="kCp" min="0" max="100" value="50"><div class="kd">小さい所を持ち上げて、声をそろえます</div></div>
+    <div class="knob"><div class="kh"><span class="kn">明るさ</span><span class="kv" id="vBr">50</span></div>
+      <input type="range" id="kBr" min="0" max="100" value="50"><div class="kd">こもり気味なら右へ。きつければ左へ</div></div>
+    <div class="knob"><div class="kh"><span class="kn">ひびき</span><span class="kv" id="vRv">28</span></div>
+      <input type="range" id="kRv" min="0" max="100" value="28"><div class="kd">お風呂やホールのような、うしろの広がり</div></div>
+    <div class="knob"><div class="kh"><span class="kn">ふくらみ</span><span class="kv" id="vUn">20</span></div>
+      <input type="range" id="kUn" min="0" max="100" value="20"><div class="kd">同じ声をうすく重ねて、ひとりを厚くします</div></div>
+  </div>
+
+  <div class="card">
+    <h3>ふたりのバランス <span class="chip">BandFix ふう</span></h3>
+    <p>パート１と２の大きさと、左右の位置をそろえます。</p>
+    <div style="height:12px"></div>
+    <div class="tg"><div><div class="tn">じどうでそろえる</div><div class="td">大きさをそろえて、左右にすこし広げます</div></div>
+      <div class="sw on" id="swAuto"></div></div>
+    <div class="knob" style="margin-top:8px"><div class="kh"><span class="kn">ふたりの左右ひらき</span><span class="kv" id="vSp">45</span></div>
+      <input type="range" id="kSp" min="0" max="100" value="45"><div class="kd">0 は まんなかに重なる／100 は 大きく左右へ</div></div>
+    <div class="knob"><div class="kh"><span class="kn">オケと声の比</span><span class="kv" id="vBal">50</span></div>
+      <input type="range" id="kBal" min="0" max="100" value="50"><div class="kd">← オケを大きく　　　　　　　　声を大きく →</div></div>
+  </div>
+</section>
+
+<!-- ============ 4. 書き出す ============ -->
+<section class="screen" id="sc4">
+  <h2>書き出す</h2>
+  <p class="lead">なにを1本にまとめるか、ここで確かめられます。</p>
+
+  <div class="card" style="padding:12px 16px">
+    <div class="trk">
+      <div class="ic" style="background:rgba(255,143,177,.18);color:var(--pink)">🎤</div>
+      <div class="tt"><b>パート１（じぶん）</b><span>あなたの声・効果あり</span></div>
+      <div class="st ok" id="oA">入る</div>
+    </div>
+    <div class="trk">
+      <div class="ic" style="background:rgba(179,164,255,.18);color:var(--lav)">🎤</div>
+      <div class="tt"><b>パート２（ハモリ・相手）</b><span>あなたの声・効果あり</span></div>
+      <div class="st no" id="oB">なし</div>
+    </div>
+    <div class="trk">
+      <div class="ic" style="background:rgba(127,227,196,.15);color:var(--mint)">♪</div>
+      <div class="tt"><b>オケ</b><span id="oBgSub">えらんでいません</span></div>
+      <div class="st no" id="oBg">なし</div>
+    </div>
+  </div>
+
+  <div class="note warn" id="ytOut" style="display:none">
+    <b>YouTube のオケは入りません。</b>入るのは <b>あなたの声だけ</b> です。<br>
+    オケごと1本にしたいときは、手持ちのオケファイルを読みこんでもう一度どうぞ。
+  </div>
+
+  <div class="card">
+    <h3>形をえらぶ</h3>
+    <div style="height:8px"></div>
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn ghost sm fmt on" data-f="wav">WAV<br><span class="small">きれい</span></button>
+      <button class="btn ghost sm fmt" data-f="mp4">音つき動画<br><span class="small">SNS用</span></button>
+    </div>
+    <div class="small" id="fmtNote">WAV は音がいちばんきれいです。パソコンに送って続きを作るならこちら。</div>
+  </div>
+
+  <div class="card center" id="doneCard" style="display:none">
+    <div class="big-emoji">🎉</div>
+    <h3 style="justify-content:center">できました</h3>
+    <p id="doneMsg">下のボタンから保存できます。</p>
+    <div style="height:14px"></div>
+    <a id="dl" class="btn mint" download="DuetGzzio.wav" href="#">ほぞんする</a>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="row">
+    <button class="btn ghost" id="btnBack" style="flex:0 0 92px;display:none">もどる</button>
+    <button class="btn" id="btnNext">つぎへ</button>
+  </div>
+  <p class="hint" id="hint">イヤホンをつけて、声をためしてください</p>
+</footer>
+</div>
+<script>
+"use strict";
+/* ============================================================
+   DuetGzzio 試作 v0.1  —  iPhone の Safari で動く「さわれる版」
+   Mac も Xcode も App Store の審査も要りません。
+   ============================================================ */
+
+var $  = function(s){ return document.querySelector(s); };
+var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+var S = {
+  step: 0, maxStep: 4,
+  ctx: null, mic: null, micNode: null, ana: null,
+  hp: false, micOk: false,
+  source: null,            /* 'yt' | 'file' | 'none' */
+  yt: null, ytReady: false, ytId: "",
+  bg: null, bgName: "",
+  take: { A:null, B:null }, target: "A",
+  recording: false, recStart: 0, recChunks: [], recLen: 0,
+  fmt: "wav", raf: 0, cd: 0
+};
+
+/* ── 画面の出し入れ ───────────────────────────── */
+function go(n){
+  n = Math.max(0, Math.min(S.maxStep, n));
+  S.step = n;
+  $$(".screen").forEach(function(el,i){ el.classList.toggle("on", i===n); });
+  $$(".dot").forEach(function(d,i){
+    d.classList.toggle("on", i===n);
+    d.classList.toggle("done", i<n);
+  });
+  $("#btnBack").style.display = n===0 ? "none" : "flex";
+  $("#btnNext").textContent = n===S.maxStep ? "1本にまとめる" : "つぎへ";
+  $("main").scrollTop = 0;
+  refresh();
+}
+
+/* ── 「つぎへ」を押せるか ────────────────────── */
+function refresh(){
+  var b = $("#btnNext"), h = $("#hint"), ok = true, msg = "";
+  if (S.step === 0){
+    ok = S.hp && S.micOk;
+    if (!S.micOk) msg = "「マイクを ためす」を押して、声を聞かせてください";
+    else if (!S.hp) msg = "イヤホンをつけて、スイッチを入れてください";
+    else msg = "したく完了。オケをえらびましょう";
+  } else if (S.step === 1){
+    ok = !!S.source && (S.source!=="yt" || !!S.ytId) && (S.source!=="file" || !!S.bg);
+    msg = ok ? "えらべました" : "オケをえらんでください";
+  } else if (S.step === 2){
+    ok = !!S.take.A;
+    msg = ok ? (S.take.B ? "ふたり分そろいました" : "パート２も録れます（なくても進めます）")
+             : "まずパート１を録ってください";
+  } else if (S.step === 3){
+    msg = "耳で聞いて、ちょうどよければ つぎへ";
+  } else {
+    msg = "押すと、ここで1本にまとめます";
+  }
+  b.disabled = !ok; h.textContent = msg;
+}
+
+/* ── マイク ──────────────────────────────────── */
+function ac(){
+  if (!S.ctx){
+    var C = window.AudioContext || window.webkitAudioContext;
+    S.ctx = new C({ sampleRate: 48000, latencyHint: "interactive" });
+  }
+  if (S.ctx.state === "suspended") S.ctx.resume();
+  return S.ctx;
+}
+
+function openMic(){
+  if (S.mic) return Promise.resolve(S.mic);
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+    return Promise.reject(new Error("no-gum"));
+  return navigator.mediaDevices.getUserMedia({
+    audio: {
+      echoCancellation: false,   /* ★ 声をつぶすので必ず切る */
+      noiseSuppression: false,   /* ★ 同上 */
+      autoGainControl:  false,   /* ★ 大きさが勝手に動くので切る */
+      channelCount: 1
+    }
+  }).then(function(st){
+    S.mic = st;
+    var c = ac();
+    S.micNode = c.createMediaStreamSource(st);
+    S.ana = c.createAnalyser();
+    S.ana.fftSize = 1024; S.ana.smoothingTimeConstant = 0.55;
+    S.micNode.connect(S.ana);
+    return st;
+  });
+}
+
+function levelLoop(){
+  if (!S.ana){ S.raf = 0; return; }
+  var buf = new Float32Array(S.ana.fftSize);
+  S.ana.getFloatTimeDomainData(buf);
+  var sum = 0;
+  for (var i=0;i<buf.length;i++) sum += buf[i]*buf[i];
+  var rms = Math.sqrt(sum/buf.length);
+  var db  = 20*Math.log10(rms + 1e-9);
+  var pct = Math.max(0, Math.min(100, (db + 60) / 60 * 100));
+  var a = $("#m0"), b = $("#m1");
+  if (a) a.style.width = pct.toFixed(1)+"%";
+  if (b) b.style.width = pct.toFixed(1)+"%";
+  var t = $("#m0t");
+  if (t){
+    if (pct < 8)       t.textContent = "もっと大きく";
+    else if (pct < 42) t.textContent = "すこし小さい";
+    else if (pct < 78){ t.textContent = "ちょうどいい"; S.micOk = true; refresh(); }
+    else               t.textContent = "大きすぎ・はなれて";
+  }
+  S.raf = requestAnimationFrame(levelLoop);
+}
+
+$("#btnMic").addEventListener("click", function(){
+  var btn = this; btn.textContent = "ひらいています…";
+  openMic().then(function(){
+    btn.textContent = "聞いています（あー と どうぞ）";
+    if (!S.raf) levelLoop();
+  }).catch(function(e){
+    btn.textContent = "マイクを ためす";
+    $("#m0t").textContent = (e && e.message === "no-gum")
+      ? "この画面ではマイクが使えません" : "マイクを許可してください";
+  });
+});
+
+$("#swHp").addEventListener("click", function(){
+  S.hp = !S.hp; this.classList.toggle("on", S.hp); refresh();
+});
+
+/* ── オケをえらぶ ────────────────────────────── */
+function pickSource(kind){
+  S.source = kind;
+  $$("#sc1 .card.pick").forEach(function(c){ c.classList.remove("sel"); });
+  ({ yt:$("#pkYt"), file:$("#pkFile"), none:$("#pkNone") })[kind].classList.add("sel");
+  $("#ytWhy").style.display  = kind==="yt"   ? "block":"none";
+  $("#ytIn").style.display   = kind==="yt"   ? "block":"none";
+  $("#fileIn").style.display = kind==="file" ? "block":"none";
+  refresh();
+}
+$("#pkYt").addEventListener("click", function(){ pickSource("yt"); });
+$("#pkFile").addEventListener("click", function(){ pickSource("file"); });
+$("#pkNone").addEventListener("click", function(){ pickSource("none"); });
+
+function ytIdOf(u){
+  var m = String(u||"").match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : "";
+}
+$("#btnYtLoad").addEventListener("click", function(){
+  var id = ytIdOf($("#ytUrl").value);
+  if (!id){ $("#ytUrl").value = ""; $("#ytUrl").placeholder = "リンクを読めませんでした"; return; }
+  S.ytId = id; this.textContent = "よみこみました ✓"; refresh();
+});
+
+$("#bgFile").addEventListener("change", function(e){
+  var f = e.target.files && e.target.files[0]; if (!f) return;
+  S.bgName = f.name;
+  $("#bgInfo").textContent = "よみこんでいます…";
+  f.arrayBuffer().then(function(ab){ return ac().decodeAudioData(ab); })
+   .then(function(buf){
+      S.bg = buf;
+      $("#bgInfo").textContent = f.name + " ／ " + fmtT(buf.duration) + " ／ " + buf.sampleRate + " Hz";
+      refresh();
+   }).catch(function(){ $("#bgInfo").textContent = "この形式は読めませんでした"; });
+});
+
+/* ── YouTube 公式プレイヤー（規約どおり、画面に出したまま鳴らす） ── */
+function loadYT(){
+  if (window.YT && window.YT.Player) return mkPlayer();
+  var t = document.createElement("script");
+  t.src = "https://www.youtube.com/iframe_api";
+  t.onerror = function(){ /* つながらないときは枠だけ出しておく */ };
+  document.head.appendChild(t);
+  window.onYouTubeIframeAPIReady = mkPlayer;
+}
+function mkPlayer(){
+  if (!S.ytId || S.yt) return;
+  var ph = $("#ytph"); if (ph) ph.remove();
+  var host = document.createElement("div"); host.id = "ytmount";
+  $("#ytbox").appendChild(host);
+  S.yt = new window.YT.Player("ytmount", {
+    videoId: S.ytId,
+    playerVars: { playsinline:1, rel:0, modestbranding:1, controls:1 },
+    events: { onReady: function(){ S.ytReady = true; } }
+  });
+}
+
+/* ── 録音 ────────────────────────────────────── */
+var WORKLET = 'class R extends AudioWorkletProcessor{' +
+  'process(i){const c=i[0]&&i[0][0];if(c)this.port.postMessage(new Float32Array(c));return true}}' +
+  'registerProcessor("rec",R)';
+
+function startCapture(){
+  var c = ac();
+  S.recChunks = [];
+  var tap = function(f32){ if (S.recording) S.recChunks.push(f32); };
+  if (c.audioWorklet){
+    var url = URL.createObjectURL(new Blob([WORKLET], {type:"application/javascript"}));
+    return c.audioWorklet.addModule(url).then(function(){
+      var n = new AudioWorkletNode(c, "rec");
+      n.port.onmessage = function(e){ tap(e.data); };
+      S.micNode.connect(n); n.connect(c.destination);
+      S.recNode = n;
+    });
+  }
+  var sp = c.createScriptProcessor(2048, 1, 1);              /* 古い Safari 用 */
+  sp.onaudioprocess = function(e){ tap(new Float32Array(e.inputBuffer.getChannelData(0))); };
+  S.micNode.connect(sp); sp.connect(c.destination);
+  S.recNode = sp;
+  return Promise.resolve();
+}
+
+function fmtT(s){ s=Math.max(0,s|0); return (s/60|0) + ":" + String(s%60).padStart(2,"0"); }
+
+$$("#trkA,#trkB").forEach(function(el){
+  el.addEventListener("click", function(){
+    S.target = (el.id === "trkA") ? "A" : "B";
+    $("#trkA").style.opacity = S.target==="A" ? "1":".5";
+    $("#trkB").style.opacity = S.target==="B" ? "1":".5";
+    $("#singLead").textContent = "いま録るのは「" +
+      (S.target==="A" ? "パート１（じぶん）" : "パート２（ハモリ・相手）") + "」です。";
+  });
+});
+
+$("#btnRec").addEventListener("click", function(){
+  if (S.recording) return stopRec();
+  openMic().then(startCapture).then(function(){ countIn(3); })
+    .catch(function(){ $("#recHint").textContent = "マイクが使えませんでした"; });
+});
+
+function countIn(n){
+  var btn = $("#btnRec");
+  S.cd = n;
+  (function tick(){
+    if (S.cd > 0){
+      btn.textContent = String(S.cd);
+      beep(S.cd === 1 ? 1320 : 880);
+      S.cd--;
+      setTimeout(tick, 600);
+    } else {
+      beginRec();
+    }
+  })();
+}
+function beep(f){
+  try{
+    var c = ac(), o = c.createOscillator(), g = c.createGain();
+    o.frequency.value = f; o.connect(g); g.connect(c.destination);
+    g.gain.setValueAtTime(0.0001, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.22, c.currentTime+0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+0.10);
+    o.start(); o.stop(c.currentTime+0.12);
+  }catch(e){}
+}
+
+function beginRec(){
+  S.recording = true; S.recChunks = [];
+  S.recStart = ac().currentTime;
+  $("#btnRec").textContent = "とめる";
+  $("#btnRec").classList.add("on");
+  $("#recHint").textContent = "録っています。もう一度押すと止まります";
+  if (S.source==="yt" && S.yt && S.ytReady){ try{ S.yt.seekTo(0); S.yt.playVideo(); }catch(e){} }
+  if (S.source==="file" && S.bg){
+    var c = ac(); var src = c.createBufferSource();
+    src.buffer = S.bg; src.connect(c.destination); src.start();
+    S.bgPlay = src;
+  }
+  if (!S.raf) levelLoop();
+  (function t(){
+    if (!S.recording) return;
+    $("#tmr").textContent = fmtT(ac().currentTime - S.recStart);
+    setTimeout(t, 250);
+  })();
+}
+
+function stopRec(){
+  S.recording = false;
+  $("#btnRec").textContent = "ろくおん";
+  $("#btnRec").classList.remove("on");
+  if (S.bgPlay){ try{ S.bgPlay.stop(); }catch(e){} S.bgPlay = null; }
+  if (S.source==="yt" && S.yt && S.ytReady){ try{ S.yt.pauseVideo(); }catch(e){} }
+
+  var total = S.recChunks.reduce(function(a,b){ return a + b.length; }, 0);
+  if (total < 2400){ $("#recHint").textContent = "短すぎました。もう一度どうぞ"; return; }
+  var out = new Float32Array(total), p = 0;
+  S.recChunks.forEach(function(ch){ out.set(ch, p); p += ch.length; });
+  var sr = ac().sampleRate;
+  S.take[S.target] = { data: out, sr: sr, dur: total/sr };
+
+  var k = S.target;
+  $("#len"+k).textContent = fmtT(total/sr) + " 録れました";
+  var st = $("#st"+k); st.className = "st ok"; st.textContent = "OK";
+  $("#recHint").textContent = "録れました。もう一方も録れます";
+  refresh();
+}
+</script>
+<script>
+"use strict";
+/* ============================================================
+   仕上げ・書き出し
+   ============================================================ */
+
+/* ── つまみの表示 ────────────────────────────── */
+var KN = [["kOff","vOff"," ms"],["kNs","vNs",""],["kPx","vPx",""],["kCp","vCp",""],
+          ["kBr","vBr",""],["kRv","vRv",""],["kUn","vUn",""],["kSp","vSp",""],["kBal","vBal",""]];
+KN.forEach(function(k){
+  var s = document.getElementById(k[0]), v = document.getElementById(k[1]);
+  if (!s || !v) return;
+  var upd = function(){ v.textContent = s.value + k[2]; };
+  s.addEventListener("input", upd); upd();
+});
+function K(id){ var e = document.getElementById(id); return e ? +e.value : 0; }
+
+document.getElementById("swAuto").addEventListener("click", function(){ this.classList.toggle("on"); });
+
+/* ── ズレ直し：じどう ─────────────────────────
+   オケがあるときは、声の「大きさの動き」とオケの「大きさの動き」を
+   ±400ms の範囲でずらして重ね、いちばん合う所を探します。
+   オケが無い（YouTube）ときは、ブラウザが申告する遅延を目安に出します。 */
+function envelope(f32, sr, hop){
+  var n = Math.floor(f32.length / hop), e = new Float32Array(n);
+  for (var i=0;i<n;i++){
+    var s = 0, b = i*hop;
+    for (var j=0;j<hop;j++){ var x = f32[b+j] || 0; s += x*x; }
+    e[i] = Math.sqrt(s/hop);
+  }
+  var mean = 0; for (var q=0;q<n;q++) mean += e[q]; mean /= (n||1);
+  for (var r=0;r<n;r++) e[r] -= mean;
+  return e;
+}
+function bestOffsetMs(){
+  var A = window.S.take.A;
+  if (!A) return null;
+  if (!window.S.bg) return null;
+  var hop = 192, sr = A.sr;   /* 4 ms きざみ */
+  var ev = envelope(A.data, sr, hop);
+  var bgm = window.S.bg.getChannelData(0);
+  var eb = envelope(bgm, window.S.bg.sampleRate, hop);
+  var maxLag = Math.round(0.4 * sr / hop), best = 0, bestV = -Infinity;
+  var n = Math.min(ev.length, eb.length);
+  if (n < 40) return null;
+  for (var lag = -maxLag; lag <= maxLag; lag++){
+    var s = 0, c = 0;
+    for (var i=0;i<n;i++){
+      var j = i + lag; if (j < 0 || j >= n) continue;
+      s += ev[i] * eb[j]; c++;
+    }
+    if (c < 20) continue;
+    s /= c;
+    if (s > bestV){ bestV = s; best = lag; }
+  }
+  return Math.round(best * hop / sr * 1000);
+}
+document.getElementById("btnAuto").addEventListener("click", function(){
+  var msg = document.getElementById("autoMsg");
+  var ms = bestOffsetMs();
+  if (ms !== null){
+    document.getElementById("kOff").value = Math.max(-300, Math.min(300, ms));
+    document.getElementById("kOff").dispatchEvent(new Event("input"));
+    msg.textContent = "オケと声を重ねて調べました → " + ms + " ms。耳で聞いて、まだズレていたら手で直してください。";
+    return;
+  }
+  var c = window.S.ctx, est = 0;
+  if (c){
+    var inL  = (c.inputLatency  || 0) * 1000;
+    var outL = ((c.outputLatency !== undefined ? c.outputLatency : c.baseLatency) || 0) * 1000;
+    est = Math.round(inL + outL);
+  }
+  if (!est) est = 60;
+  document.getElementById("kOff").value = Math.max(-300, Math.min(300, -est));
+  document.getElementById("kOff").dispatchEvent(new Event("input"));
+  msg.textContent = "オケが無いので、iPhone が申告する遅れ（約 " + est +
+    " ms）を目安に入れました。これは目安です。耳で合わせてください。";
+});
+
+/* ── ノイズ除去（前処理・素の配列に対してかける） ── */
+function gate(src, sr, amount){
+  if (amount <= 0) return src;
+  /* ★ しきい値は「その録音じたいの大きさ」に対して決める。
+     絶対値で決めると、小さく録れた人には効かず、大きく録れた人には効きすぎる。 */
+  var ref = rms(src);
+  if (ref < 1e-7) return src;
+  var thr = ref * (0.02 + amount/100 * 0.30);         /* 0→自分の2% … 100→32% */
+  var out = new Float32Array(src.length);
+  var atk = Math.exp(-1 / (0.004 * sr));
+  var rel = Math.exp(-1 / (0.120 * sr));
+  var env = 0, g = 0;
+  var floorG = 1 - amount/110;                        /* 完全には閉じない（閉じ切るとパクつく） */
+  for (var i=0;i<src.length;i++){
+    var a = Math.abs(src[i]);
+    env = a > env ? atk*env + (1-atk)*a : rel*env + (1-rel)*a;
+    var want = env > thr ? 1 : floorG;
+    g += (want - g) * (want > g ? 0.02 : 0.0015);
+    out[i] = src[i] * g;
+  }
+  return out;
+}
+
+/* ── ひびき用の部屋（かんたんな残響を自分で作る） ── */
+function makeIR(ctx, sec, decay){
+  var sr = ctx.sampleRate, n = Math.floor(sr*sec);
+  var ir = ctx.createBuffer(2, n, sr);
+  for (var ch=0; ch<2; ch++){
+    var d = ir.getChannelData(ch);
+    for (var i=0;i<n;i++){
+      var t = i/n;
+      d[i] = (Math.random()*2-1) * Math.pow(1-t, decay) * (i < sr*0.006 ? t/(sr*0.006/n||1) : 1);
+    }
+  }
+  return ir;
+}
+
+/* ── 1本のテイクを、効果つきで鳴らす枝を組む ── */
+function voiceChain(ctx, buf, pan, delaySec){
+  var src = ctx.createBufferSource(); src.buffer = buf;
+  var pre = ctx.createDelay(1.0); pre.delayTime.value = Math.max(0, delaySec);
+
+  var px = ctx.createBiquadFilter();                    /* 近さ */
+  px.type = "lowshelf"; px.frequency.value = 190;
+  px.gain.value = K("kPx") * 0.075;                     /* 0〜7.5 dB */
+
+  var hp = ctx.createBiquadFilter();                    /* 足元を切る */
+  hp.type = "highpass"; hp.frequency.value = 78;
+
+  var br = ctx.createBiquadFilter();                    /* 明るさ */
+  br.type = "highshelf"; br.frequency.value = 4200;
+  br.gain.value = (K("kBr") - 50) * 0.14;               /* -7 〜 +7 dB */
+
+  var cp = ctx.createDynamicsCompressor();              /* のび */
+  cp.threshold.value = -10 - K("kCp") * 0.26;
+  cp.ratio.value     = 1.6 + K("kCp") * 0.045;
+  cp.attack.value    = 0.006; cp.release.value = 0.14; cp.knee.value = 8;
+
+  var mk = ctx.createGain();                            /* つぶした分をもどす */
+  mk.gain.value = Math.pow(10, (K("kCp") * 0.035) / 20);
+
+  var p  = ctx.createStereoPanner(); p.pan.value = pan;
+
+  src.connect(pre); pre.connect(px); px.connect(hp); hp.connect(br);
+  br.connect(cp); cp.connect(mk); mk.connect(p);
+
+  /* ふくらみ：うすい遅れを左右に足す */
+  var un = K("kUn");
+  if (un > 0){
+    [[0.013,-0.55],[0.021,0.55]].forEach(function(d){
+      var dl = ctx.createDelay(0.2); dl.delayTime.value = Math.max(0,delaySec) + d[0];
+      var gg = ctx.createGain(); gg.gain.value = un/100 * 0.42;
+      var pp = ctx.createStereoPanner(); pp.pan.value = Math.max(-1,Math.min(1,pan + d[1]));
+      src.connect(dl); dl.connect(gg); gg.connect(pp); pp.connect(p);
+    });
+  }
+  return { src: src, out: p };
+}
+
+/* ── 1本にまとめる ─────────────────────────── */
+function bounce(){
+  var A = window.S.take.A, B = window.S.take.B, bg = window.S.bg;
+  if (!A) return Promise.reject(new Error("no-take"));
+  var sr = A.sr;
+  var offs = K("kOff") / 1000;                 /* 正 = 声を遅らせる */
+  var vDelay = Math.max(0,  offs);
+  var bDelay = Math.max(0, -offs);
+  var dur = Math.max(
+    A.dur + vDelay,
+    B ? B.dur + vDelay : 0,
+    bg ? bg.duration + bDelay : 0
+  ) + 1.2;
+
+  var OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  var ctx = new OC(2, Math.ceil(dur*sr), sr);
+
+  var spread = K("kSp")/100;
+  var auto   = document.getElementById("swAuto").classList.contains("on");
+
+  function mkBuf(t){
+    var b = ctx.createBuffer(1, t.data.length, t.sr);
+    b.copyToChannel(gate(t.data, t.sr, K("kNs")), 0);
+    return b;
+  }
+
+  var master = ctx.createGain();
+  var rvSend = ctx.createGain(); rvSend.gain.value = K("kRv")/100 * 0.55;
+  var rv = ctx.createConvolver(); rv.buffer = makeIR(ctx, 1.9, 2.6);
+  var rvDamp = ctx.createBiquadFilter(); rvDamp.type="highpass"; rvDamp.frequency.value=260;
+  rvSend.connect(rvDamp); rvDamp.connect(rv); rv.connect(master);
+
+  var vGain = ctx.createGain();
+  var chains = [];
+  chains.push(voiceChain(ctx, mkBuf(A), B ? -spread*0.8 : 0, vDelay));
+  if (B) chains.push(voiceChain(ctx, mkBuf(B), spread*0.8, vDelay));
+
+  /* じどうでそろえる：それぞれの実効レベルを見て、そろえる */
+  var refRms = rms(A.data);
+  chains.forEach(function(c, i){
+    var g = ctx.createGain();
+    var t = i===0 ? A : B;
+    g.gain.value = auto ? Math.max(0.35, Math.min(2.4, refRms / (rms(t.data)+1e-6))) : 1;
+    if (i===1) g.gain.value *= 0.86;             /* ハモリは少し下げるのが定石 */
+    c.out.connect(g); g.connect(vGain); g.connect(rvSend);
+  });
+  vGain.connect(master);
+
+  /* オケ */
+  if (bg){
+    var bs = ctx.createBufferSource(); bs.buffer = bg;
+    var bd = ctx.createDelay(1.0); bd.delayTime.value = bDelay;
+    var bgG = ctx.createGain();
+    var bal = K("kBal")/100;
+    bgG.gain.value = (1 - bal) * 1.7;
+    vGain.gain.value = 0.35 + bal * 1.0;
+    bs.connect(bd); bd.connect(bgG); bgG.connect(master);
+    bs.start(0);
+  } else {
+    vGain.gain.value = 1.0;
+  }
+
+  /* 最後の安全弁 */
+  var lim = ctx.createDynamicsCompressor();
+  lim.threshold.value = -1.2; lim.ratio.value = 20;
+  lim.attack.value = 0.002; lim.release.value = 0.10; lim.knee.value = 0;
+  master.connect(lim); lim.connect(ctx.destination);
+
+  chains.forEach(function(c){ c.src.start(0); });
+  return ctx.startRendering();
+}
+/* ── 書き出す前に、はみ出しを必ず 0dB より下へ収める ──
+   DynamicsCompressor は先読みが無いので、リミッターを置いても山を少し越えます。
+   越えたぶんは WAV にすると そのまま歪むので、最後に全体を下げます。 */
+function normalize(ab, peakDb){
+  var target = Math.pow(10, peakDb/20), pk = 0, c, d, i;
+  for (c=0;c<ab.numberOfChannels;c++){
+    d = ab.getChannelData(c);
+    for (i=0;i<d.length;i++){ var a = d[i] < 0 ? -d[i] : d[i]; if (a > pk) pk = a; }
+  }
+  if (pk <= 1e-6 || pk <= target) return 0;
+  var g = target / pk;
+  for (c=0;c<ab.numberOfChannels;c++){
+    d = ab.getChannelData(c);
+    for (i=0;i<d.length;i++) d[i] *= g;
+  }
+  return 20*Math.log10(g);
+}
+
+function rms(a){
+  var s = 0, n = a.length, step = Math.max(1, n/60000|0);
+  for (var i=0;i<n;i+=step) s += a[i]*a[i];
+  return Math.sqrt(s / Math.ceil(n/step));
+}
+
+/* ── WAV に包む ─────────────────────────────── */
+function toWav(ab){
+  var ch = ab.numberOfChannels, len = ab.length, sr = ab.sampleRate;
+  var out = new DataView(new ArrayBuffer(44 + len*ch*2));
+  var w = function(o,s){ for (var i=0;i<s.length;i++) out.setUint8(o+i, s.charCodeAt(i)); };
+  w(0,"RIFF"); out.setUint32(4, 36+len*ch*2, true); w(8,"WAVEfmt ");
+  out.setUint32(16,16,true); out.setUint16(20,1,true); out.setUint16(22,ch,true);
+  out.setUint32(24,sr,true); out.setUint32(28,sr*ch*2,true);
+  out.setUint16(32,ch*2,true); out.setUint16(34,16,true);
+  w(36,"data"); out.setUint32(40, len*ch*2, true);
+  var d = [], i;
+  for (i=0;i<ch;i++) d.push(ab.getChannelData(i));
+  var p = 44;
+  for (i=0;i<len;i++) for (var c=0;c<ch;c++){
+    var v = Math.max(-1, Math.min(1, d[c][i]));
+    out.setInt16(p, v<0 ? v*0x8000 : v*0x7fff, true); p += 2;
+  }
+  return new Blob([out.buffer], { type: "audio/wav" });
+}
+
+/* ── 形えらび ───────────────────────────────── */
+Array.prototype.slice.call(document.querySelectorAll(".fmt")).forEach(function(b){
+  b.addEventListener("click", function(){
+    document.querySelectorAll(".fmt").forEach(function(x){ x.classList.remove("on"); x.style.borderColor=""; });
+    b.classList.add("on"); b.style.borderColor = "var(--lav)";
+    window.S.fmt = b.dataset.f;
+    document.getElementById("fmtNote").textContent = (window.S.fmt === "wav")
+      ? "WAV は音がいちばんきれいです。パソコンに送って続きを作るならこちら。"
+      : "X や Instagram にそのまま出すなら、縦の動画で書き出します（この試作では音のみ）。";
+  });
+});
+
+/* ── 画面の行き来 ───────────────────────────── */
+document.getElementById("btnBack").addEventListener("click", function(){ go(window.S.step-1); });
+document.getElementById("btnNext").addEventListener("click", function(){
+  var S = window.S;
+  if (S.step === 1){
+    document.getElementById("ytbox").style.display = (S.source==="yt") ? "block" : "none";
+    if (S.source==="yt") loadYT();
+    document.getElementById("trkA").click();
+  }
+  if (S.step === 2){
+    document.getElementById("oB").className  = S.take.B ? "st ok" : "st no";
+    document.getElementById("oB").textContent = S.take.B ? "入る" : "なし";
+    var bgSt = document.getElementById("oBg");
+    if (S.source === "file" && S.bg){
+      bgSt.className = "st ok"; bgSt.textContent = "入る";
+      document.getElementById("oBgSub").textContent = S.bgName;
+    } else if (S.source === "yt"){
+      bgSt.className = "st ng"; bgSt.textContent = "入らない";
+      document.getElementById("oBgSub").textContent = "YouTube は録音に混ぜられません";
+      document.getElementById("ytOut").style.display = "block";
+    } else {
+      bgSt.className = "st no"; bgSt.textContent = "なし";
+      document.getElementById("oBgSub").textContent = "アカペラ";
+    }
+  }
+  if (S.step === 4){
+    var btn = this; btn.disabled = true; btn.textContent = "まとめています…";
+    bounce().then(function(ab){
+      var cut = normalize(ab, -1.0);            /* ★ ここで歪みを止める */
+      var blob = toWav(ab);
+      var a = document.getElementById("dl");
+      a.href = URL.createObjectURL(blob);
+      a.download = "DuetGzzio_" + Date.now() + ".wav";
+      document.getElementById("doneCard").style.display = "block";
+      document.getElementById("doneMsg").textContent =
+        fmtT(ab.duration) + " ／ " + (blob.size/1048576).toFixed(1) + " MB できました。"
+        + (cut < -0.1 ? "（大きすぎたので " + Math.abs(cut).toFixed(1) + " dB 下げました）" : "");
+      btn.textContent = "もう一度まとめる"; btn.disabled = false;
+      document.querySelector("main").scrollTop = 99999;
+    }).catch(function(){
+      btn.textContent = "1本にまとめる"; btn.disabled = false;
+      document.getElementById("hint").textContent = "まとめられませんでした。録音を確かめてください";
+    });
+    return;
+  }
+  go(S.step + 1);
+});
+
+/* ── 起動時 ─────────────────────────────────── */
+window.S = S;
+document.querySelector(".fmt").style.borderColor = "var(--lav)";
+go(0);
+console.log("DuetGzzio 試作 v0.1 起動");
+</script>
+</body>
+</html>
